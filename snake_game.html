@@ -10,15 +10,41 @@
             padding: 0;
             background-color: #1e1e1e;
             overflow: hidden;
+            font-family: Arial, sans-serif;
         }
         canvas {
             display: block;
-            margin: 0 auto;
+        }
+        h2 {
+            color: white;
+            position: fixed;
+            top: 10px;
+            left: 10px;
+        }
+        #restart-btn {
+            display: none;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: #4CAF50;
+            color: white;
+            padding: 15px 32px;
+            font-size: 16px;
+            border: none;
+            cursor: pointer;
+            border-radius: 5px;
+        }
+        #restart-btn:hover {
+            background-color: #45a049;
         }
     </style>
 </head>
 <body>
+    <h2>Score: <span id="score">0</span></h2>
+    <h2 style="color:white; position: fixed; top: 10px; right: 10px;">Elio</h2>
     <canvas id="gameCanvas"></canvas>
+    <button id="restart-btn" onclick="restartGame()">Restart Game</button>
 
     <script>
         // Canvas setup
@@ -29,10 +55,10 @@
 
         // Game variables
         let player, bullets, enemies, gameOver;
+        let score = 0;
         const playerSpeed = 5;
         const bulletSpeed = 7;
         const enemySpeed = 2;
-        let score = 0;
 
         // Player object
         function Player(x, y) {
@@ -123,31 +149,36 @@
                 enemies.forEach((enemy, enemyIndex) => {
                     if (bullet.y <= enemy.y + enemy.height && bullet.y >= enemy.y && bullet.x >= enemy.x && bullet.x <= enemy.x + enemy.width) {
                         // Bullet hits the enemy
-                        enemy.health -= 50;
+                        enemy.color = 'green';  // Enemy turns green when hit
                         bullets.splice(index, 1);  // Remove bullet
                         if (enemy.health <= 0) {
                             enemies.splice(enemyIndex, 1);  // Remove enemy
                             score += 10;  // Increase score
+                            document.getElementById("score").textContent = score; // Update score display
                         }
                     }
                 });
             });
 
-            // Check for collisions with player
+            // Check for collisions with player (game over)
             enemies.forEach((enemy, enemyIndex) => {
                 if (enemy.y + enemy.height >= player.y && enemy.x < player.x + player.width && enemy.x + enemy.width > player.x) {
-                    gameOver = true;  // Game over if player is hit
-                    alert('Game Over! You lost.');
-                    clearInterval(gameInterval);  // Stop the game loop
+                    gameOver = true;  // Game over if player touches an enemy
+                    document.getElementById("restart-btn").style.display = "block";  // Show restart button
                 }
             });
         }
 
-        // Game over check
-        function checkGameOver() {
-            if (gameOver) {
-                alert('Game Over! Your Score: ' + score);
-            }
+        // Restart the game
+        function restartGame() {
+            player = new Player(canvas.width / 2, canvas.height - 50);
+            bullets = [];
+            enemies = [];
+            score = 0;
+            gameOver = false;
+            document.getElementById("score").textContent = score;
+            document.getElementById("restart-btn").style.display = "none";  // Hide restart button
+            gameLoop();
         }
 
         // Keydown event listener
@@ -177,7 +208,6 @@
             bullets.forEach(bullet => bullet.update());  // Update bullet positions
             enemies.forEach(enemy => enemy.update());  // Update enemies
             detectCollisions();  // Check for collisions
-            checkGameOver();  // Check if game is over
 
             // Create new enemies periodically
             if (Math.random() < 0.02) createEnemy();
