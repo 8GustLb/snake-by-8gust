@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>8Gust Game - Snake</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+        }
+
+        canvas {
+            border: 1px solid black;
+            margin-top: 20px;
+        }
+
+        #score, #highScore {
+            font-size: 20px;
+        }
+
+        #gameTitle {
+            font-size: 24px;
+            font-weight: bold;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div id="gameTitle">8Gust Game</div>
+    <p id="score">Score: 0</p>
+    <p id="highScore">High Score: 0</p>
+    <canvas id="gameCanvas" width="400" height="400"></canvas>
+
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const gridSize = 20;
+        const canvasSize = 400;
+        let snake = [{ x: 80, y: 80 }];
+        let direction = 'RIGHT';
+        let food = generateFood();
+        let score = 0;
+
+        // Get high score from localStorage or set to 0 if not found
+        let highScore = localStorage.getItem('highScore') ? parseInt(localStorage.getItem('highScore')) : 0;
+        document.getElementById('highScore').innerText = 'High Score: ' + highScore;
+
+        // Main game loop
+        function gameLoop() {
+            setTimeout(() => {
+                update();
+                draw();
+                gameLoop();
+            }, 100);
+        }
+
+        // Update snake's position and handle collisions
+        function update() {
+            const head = { ...snake[0] };
+            if (direction === 'UP') head.y -= gridSize;
+            if (direction === 'DOWN') head.y += gridSize;
+            if (direction === 'LEFT') head.x -= gridSize;
+            if (direction === 'RIGHT') head.x += gridSize;
+
+            // Check for snake collisions with itself or walls
+            if (head.x < 0 || head.y < 0 || head.x >= canvasSize || head.y >= canvasSize || isCollision(head)) {
+                resetGame();
+                return;
+            }
+
+            snake.unshift(head);
+
+            // Check for food
+            if (head.x === food.x && head.y === food.y) {
+                score++;
+                document.getElementById('score').innerText = 'Score: ' + score;
+                food = generateFood();
+                if (score > highScore) {
+                    highScore = score;
+                    document.getElementById('highScore').innerText = 'High Score: ' + highScore;
+                    // Save new high score to localStorage
+                    localStorage.setItem('highScore', highScore);
+                }
+            } else {
+                snake.pop();
+            }
+        }
+
+        // Draw snake and food
+        function draw() {
+            ctx.clearRect(0, 0, canvasSize, canvasSize);
+
+            // Draw snake
+            snake.forEach(segment => {
+                ctx.fillStyle = 'green';
+                ctx.fillRect(segment.x, segment.y, gridSize, gridSize);
+            });
+
+            // Draw food
+            ctx.fillStyle = 'red';
+            ctx.fillRect(food.x, food.y, gridSize, gridSize);
+        }
+
+        // Generate a random food position
+        function generateFood() {
+            const x = Math.floor(Math.random() * (canvasSize / gridSize)) * gridSize;
+            const y = Math.floor(Math.random() * (canvasSize / gridSize)) * gridSize;
+            return { x, y };
+        }
+
+        // Check if snake collided with itself
+        function isCollision(head) {
+            return snake.some((segment, index) => index !== 0 && segment.x === head.x && segment.y === head.y);
+        }
+
+        // Reset the game when snake collides with wall or itself
+        function resetGame() {
+            snake = [{ x: 80, y: 80 }];
+            direction = 'RIGHT';
+            score = 0;document.getElementById('score').innerText = 'Score: ' + score;
+        }
+
+        // Listen for arrow key presses to change snake's direction
+        window.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowUp' && direction !== 'DOWN') direction = 'UP';
+            if (e.key === 'ArrowDown' && direction !== 'UP') direction = 'DOWN';
+            if (e.key === 'ArrowLeft' && direction !== 'RIGHT') direction = 'LEFT';
+            if (e.key === 'ArrowRight' && direction !== 'LEFT') direction = 'RIGHT';
+        });
+
+        // Start the game
+        gameLoop();
+    </script>
+</body>
+</html>
