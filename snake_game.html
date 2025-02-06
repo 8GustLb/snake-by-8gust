@@ -3,12 +3,30 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Chess Game with Bot</title>
+  <title>Chess Game with Bot - Elio</title>
   <link rel="stylesheet" href="https://unpkg.com/@chriso/chessboardjs@1.0.0/dist/chessboard-1.0.0.min.css">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chess.js@0.10.3/chess.min.js"></script>
   <style>
-    #board1 { margin: 0 auto; }
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f0f0f0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+    }
+
+    h1 {
+      text-align: center;
+    }
+
+    #board1 {
+      width: 400px;
+      height: 400px;
+    }
+
     #restart-btn {
       text-align: center;
       padding: 10px;
@@ -16,16 +34,26 @@
       color: white;
       cursor: pointer;
     }
+
     #restart-btn:hover {
       background-color: #45a049;
+    }
+
+    .game-title {
+      text-align: center;
+      font-size: 24px;
+      margin-bottom: 20px;
+      color: #333;
     }
   </style>
 </head>
 <body>
-  <h1 style="text-align:center;">Chess Game with Bot</h1>
-  <div id="board1" style="width: 400px; height: 400px; margin: 0 auto;"></div>
-  <div id="restart-btn">Restart Game</div>
-  
+  <div>
+    <h1 class="game-title">Chess Game with Bot - Elio</h1>
+    <div id="board1"></div>
+    <div id="restart-btn">Restart Game</div>
+  </div>
+
   <script>
     const board = ChessBoard("board1", {
       draggable: true,
