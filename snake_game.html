@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Chess Game with Bot - Elio</title>
+  <title>Made by Elio</title>
   <link rel="stylesheet" href="https://unpkg.com/@chriso/chessboardjs@1.0.0/dist/chessboard-1.0.0.min.css">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chess.js@0.10.3/chess.min.js"></script>
@@ -17,71 +17,54 @@
       height: 100vh;
       margin: 0;
       flex-direction: column;
+      text-align: center;
     }
 
     h1 {
-      font-size: 24px;
+      font-size: 36px;
       color: #333;
       margin-bottom: 20px;
     }
 
     #board1 {
-      width: 400px;
-      height: 400px;
-    }
-
-    #restart-btn {
-      margin-top: 20px;
-      padding: 10px;
-      background-color: #4CAF50;
-      color: white;
-      cursor: pointer;
-    }
-
-    #restart-btn:hover {
-      background-color: #45a049;
+      width: 100vmin;
+      height: 100vmin;
     }
   </style>
 </head>
 <body>
-  <h1>Chess Game with Bot - Elio</h1>
+
+  <h1>Made by Elio</h1>
   <div id="board1"></div>
-  <div id="restart-btn">Restart Game</div>
 
   <script src="https://unpkg.com/@chriso/chessboardjs@1.0.0/dist/chessboard-1.0.0.min.js"></script>
 
   <script>
-    // Set up the board and game logic using chess.js and chessboard.js
     const board = ChessBoard('board1', {
       draggable: true,
       dropOffBoard: 'trash',
       sparePieces: true
     });
 
-    const game = new Chess(); // Using chess.js to handle the game logic
+    const game = new Chess(); // Initialize Chess.js to handle game logic
 
-    // Function for the bot to make a move
+    // Function to let the bot make a move
     function makeBotMove() {
       const moves = game.legalMoves();
       const randomMove = moves[Math.floor(Math.random() * moves.length)];
       game.uci(randomMove); // Apply random move to the game
-      board.position(game.fen()); // Update the board to reflect the move
+      board.position(game.fen()); // Update the board to reflect the bot's move
     }
 
-    // Event for restarting the game
-    document.getElementById('restart-btn').addEventListener('click', () => {
-      game.reset(); // Reset the game logic
-      board.start(); // Reset the board to the initial position
-    });
-
-    // Detect when the user makes a move
+    // Event listener for when the player makes a move
     board.on('move', (oldPos, newPos) => {
-      game.uci(newPos); // Apply the user's move to the game
-      makeBotMove(); // Let the bot make a move after the user
+      game.uci(newPos); // Apply the player's move to the game
+      makeBotMove(); // Let the bot make a move after the player
     });
 
-    // Start the game with the initial position
-    board.start();
+    // Initialize the game
+    board.start(); // Start the game with the initial position
   </script>
+
 </body>
 </html>
