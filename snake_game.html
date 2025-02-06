@@ -16,10 +16,13 @@
       align-items: center;
       height: 100vh;
       margin: 0;
+      flex-direction: column;
     }
 
     h1 {
-      text-align: center;
+      font-size: 24px;
+      color: #333;
+      margin-bottom: 20px;
     }
 
     #board1 {
@@ -28,7 +31,7 @@
     }
 
     #restart-btn {
-      text-align: center;
+      margin-top: 20px;
       padding: 10px;
       background-color: #4CAF50;
       color: white;
@@ -38,21 +41,12 @@
     #restart-btn:hover {
       background-color: #45a049;
     }
-
-    .game-title {
-      text-align: center;
-      font-size: 24px;
-      margin-bottom: 20px;
-      color: #333;
-    }
   </style>
 </head>
 <body>
-  <div>
-    <h1 class="game-title">Chess Game with Bot - Elio</h1>
-    <div id="board1"></div>
-    <div id="restart-btn">Restart Game</div>
-  </div>
+  <h1>Chess Game with Bot - Elio</h1>
+  <div id="board1"></div>
+  <div id="restart-btn">Restart Game</div>
 
   <script>
     const board = ChessBoard("board1", {
@@ -61,36 +55,29 @@
       sparePieces: true
     });
 
-    const game = new Chess(); // Using chess.js to handle game logic
+    const game = new Chess(); // Initialize Chess.js for game logic
 
+    // Function to make the bot move
     function makeBotMove() {
       const moves = game.legalMoves();
       const randomMove = moves[Math.floor(Math.random() * moves.length)];
       game.uci(randomMove); // Apply random move to the game
-      board.position(game.fen()); // Update the board
-      renderMoveHistory(game.history());
+      board.position(game.fen()); // Update the board to reflect the move
     }
 
-    // This function updates the move history and handles the bot's turn after the user plays.
-    function renderMoveHistory(moves) {
-      let historyElement = $('#move-history').empty();
-      historyElement.empty();
-      historyElement.append(moves.join(' '));
-    }
-
-    // Event for restarting the game
+    // Handle the restart functionality
     document.getElementById('restart-btn').addEventListener('click', () => {
-      game.reset();
-      board.start();
+      game.reset(); // Reset the chess game
+      board.start(); // Reset the chessboard
     });
 
-    // Detect when the user makes a move
+    // Event listener for when the user makes a move
     board.on('move', (oldPos, newPos) => {
-      game.uci(newPos); // Apply move to game logic
-      makeBotMove(); // Let the bot play after the user
+      game.uci(newPos); // Apply the user's move to the game
+      makeBotMove(); // Let the bot make a move after the user
     });
 
-    // Start the game with the initial position
+    // Initialize the game
     board.start();
   </script>
 </body>
