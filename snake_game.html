@@ -43,8 +43,10 @@
         let gameOver = false;
 
         // Set up the canvas size dynamically
-        canvas.width = window.innerWidth - 20;
-        canvas.height = window.innerHeight - 100;
+        const maxWidth = 800;
+        const maxHeight = 600;
+        canvas.width = Math.min(window.innerWidth - 20, maxWidth);
+        canvas.height = Math.min(window.innerHeight - 100, maxHeight);
 
         // Scale the game according to the screen size
         const gridSize = 20;
@@ -138,6 +140,16 @@
             ctx.fillText(`Score: ${score}`, 10, 30);
         }
 
+        // Handle keyboard input for desktop controls
+        function handleKeyPress(event) {
+            if (gameOver) return;
+
+            if (event.key === "ArrowUp" && direction !== "DOWN") direction = "UP";
+            if (event.key === "ArrowDown" && direction !== "UP") direction = "DOWN";
+            if (event.key === "ArrowLeft" && direction !== "RIGHT") direction = "LEFT";
+            if (event.key === "ArrowRight" && direction !== "LEFT") direction = "RIGHT";
+        }
+
         // Handle touch events for mobile controls
         function handleTouchStart(event) {
             const touch = event.touches[0];
@@ -158,6 +170,9 @@
                 e.preventDefault();
             }, { once: true });
         }
+
+        // Listen for keydown events for desktop controls
+        window.addEventListener("keydown", handleKeyPress);
 
         // Listen for touch events on mobile
         canvas.addEventListener("touchstart", handleTouchStart);
