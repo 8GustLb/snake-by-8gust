@@ -3,217 +3,192 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mini Shooter Game</title>
+    <title>Chess Game with Bot</title>
     <style>
         body {
+            font-family: Arial, sans-serif;
             margin: 0;
             padding: 0;
-            background-color: #1e1e1e;
-            overflow: hidden;
-            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
         }
-        canvas {
-            display: block;
+
+        h1 {
+            text-align: center;
+            margin-top: 20px;
         }
-        h2 {
-            color: white;
-            position: fixed;
-            top: 10px;
-            left: 10px;
+
+        #board {
+            display: grid;
+            grid-template-columns: repeat(8, 60px);
+            grid-template-rows: repeat(8, 60px);
+            margin: 20px auto;
+            border: 2px solid #333;
         }
-        #restart-btn {
-            display: none;
+
+        .cell {
+            width: 60px;
+            height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 1px solid #ccc;
+            position: relative;
+        }
+
+        .cell:nth-child(odd) {
+            background-color: #f0d9b5;
+        }
+
+        .cell:nth-child(even) {
+            background-color: #b58863;
+        }
+
+        .piece {
+            width: 50%;
+            height: 50%;
             position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            background-color: #4CAF50;
-            color: white;
-            padding: 15px 32px;
-            font-size: 16px;
-            border: none;
             cursor: pointer;
-            border-radius: 5px;
         }
-        #restart-btn:hover {
-            background-color: #45a049;
-        }
+
+        .piece.white { color: white; }
+        .piece.black { color: black; }
     </style>
 </head>
 <body>
-    <h2>Score: <span id="score">0</span></h2>
-    <h2 style="color:white; position: fixed; top: 10px; right: 10px;">Elio</h2>
-    <canvas id="gameCanvas"></canvas>
-    <button id="restart-btn" onclick="restartGame()">Restart Game</button>
+    <h1>Chess Game with Bot</h1>
+    <div id="board"></div>
 
     <script>
-        // Canvas setup
-        const canvas = document.getElementById('gameCanvas');
-        const ctx = canvas.getContext('2d');
-        canvas.width = window.innerWidth;
-        canvas.height = window.innerHeight;
+        // Initial Chess Setup
+        const initialBoard = [
+            ["r", "n", "b", "q", "k", "b", "n", "r"],
+            ["p", "p", "p", "p", "p", "p", "p", "p"],
+            ["", "", "", "", "", "", "", ""],
+            ["", "", "", "", "", "", "", ""],
+            ["", "", "", "", "", "", "", ""],
+            ["", "", "", "", "", "", "", ""],
+            ["P", "P", "P", "P", "P", "P", "P", "P"],
+            ["R", "N", "B", "Q", "K", "B", "N", "R"]
+        ];
 
-        // Game variables
-        let player, bullets, enemies, gameOver;
-        let score = 0;
-        const playerSpeed = 5;
-        const bulletSpeed = 7;
-        const enemySpeed = 2;
+        let board = JSON.parse(JSON.stringify(initialBoard)); // Copy the initial board
+        let selectedPiece = null;
+        let validMoves = [];
 
-        // Player object
-        function Player(x, y) {
-            this.x = x;
-            this.y = y;
-            this.width = 40;
-            this.height = 40;
-            this.color = 'blue';
-            this.moveUp = false;
-            this.moveDown = false;
-            this.moveLeft = false;
-            this.moveRight = false;
+        const boardElement = document.getElementById('board');
 
-            this.update = function() {
-                if (this.moveUp && this.y > 0) this.y -= playerSpeed;
-                if (this.moveDown && this.y < canvas.height - this.height) this.y += playerSpeed;
-                if (this.moveLeft && this.x > 0) this.x -= playerSpeed;
-                if (this.moveRight && this.x < canvas.width - this.width) this.x += playerSpeed;
+        // Map pieces to their symbols
+        const pieceSymbols = {
+            "K": "♔", "Q": "♕", "R": "♖", "B": "♗", "N": "♘", "P": "♙",
+            "k": "♚", "q": "♛", "r": "♜", "b": "♝", "n": "♞", "p": "♟"
+        };
 
-                ctx.fillStyle = this.color;
-                ctx.fillRect(this.x, this.y, this.width, this.height);
-            };
-        }
+        // Render the board
+        function renderBoard() {
+            boardElement.innerHTML = "";
+            for (let row = 0; row < 8; row++) {
+                for (let col = 0; col < 8; col++) {
+                    const cell = document.createElement('div');
+                    cell.classList.add('cell');
+                    cell.dataset.row = row;
+                    cell.dataset.col = col;
 
-        // Bullet object
-        function Bullet(x, y) {
-            this.x = x;
-            this.y = y;
-            this.radius = 5;
-            this.color = 'red';
-
-            this.update = function() {
-                this.y -= bulletSpeed;
-                ctx.beginPath();
-                ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
-                ctx.fillStyle = this.color;
-                ctx.fill();
-                ctx.closePath();
-            };
-        }
-
-        // Enemy object
-        function Enemy(x, y) {
-            this.x = x;
-            this.y = y;
-            this.width = 40;
-            this.height = 40;
-            this.color = 'green';
-            this.speed = enemySpeed;
-
-            this.update = function() {
-                this.y += this.speed;
-                ctx.fillStyle = this.color;
-                ctx.fillRect(this.x, this.y, this.width, this.height);
-            };
-        }
-
-        // Create player
-        player = new Player(canvas.width / 2, canvas.height - 50);
-
-        // Bullet array
-        bullets = [];
-
-        // Enemy array
-        enemies = [];
-
-        // Game over flag
-        gameOver = false;
-
-        // Create new enemy
-        function createEnemy() {
-            let x = Math.random() * (canvas.width - 40);
-            let y = -40;  // Start off-screen
-            enemies.push(new Enemy(x, y));
-        }
-
-        // Shooting logic
-        function shootBullet() {
-            let bullet = new Bullet(player.x + player.width / 2, player.y);
-            bullets.push(bullet);
-        }
-
-        // Collision detection
-        function detectCollisions() {
-            bullets.forEach((bullet, index) => {
-                enemies.forEach((enemy, enemyIndex) => {
-                    if (bullet.y <= enemy.y + enemy.height && bullet.y >= enemy.y && bullet.x >= enemy.x && bullet.x <= enemy.x + enemy.width) {
-                        // Bullet hits the enemy
-                        enemies.splice(enemyIndex, 1);  // Remove the enemy
-                        bullets.splice(index, 1);  // Remove the bullet
-                        score += 10;  // Increase score
-                        document.getElementById("score").textContent = score; // Update score display
+                    // Display piece if there is one
+                    const piece = board[row][col];
+                    if (piece) {
+                        const pieceElement = document.createElement('div');
+                        pieceElement.classList.add('piece', piece === piece.toUpperCase() ? 'white' : 'black');
+                        pieceElement.innerHTML = pieceSymbols[piece];
+                        cell.appendChild(pieceElement);
                     }
-                });
-            });
 
-            // Check for collisions with player (game over)
-            enemies.forEach((enemy, enemyIndex) => {
-                if (enemy.y + enemy.height >= player.y && enemy.x < player.x + player.width && enemy.x + enemy.width > player.x && enemy.y + enemy.height <= player.y + player.height) {
-                    // Game over if player collides with the enemy
-                    gameOver = true;  // Game over
-                    document.getElementById("restart-btn").style.display = "block";  // Show restart button
+                    // Click event to select and move pieces
+                    cell.addEventListener('click', () => handleCellClick(row, col));
+                    boardElement.appendChild(cell);
                 }
-            });
+            }
         }
 
-        // Restart the game
-        function restartGame() {
-            player = new Player(canvas.width / 2, canvas.height - 50);
-            bullets = [];
-            enemies = [];
-            score = 0;
-            gameOver = false;
-            document.getElementById("score").textContent = score;
-            document.getElementById("restart-btn").style.display = "none";  // Hide restart button
-            gameLoop();  // Restart the game loop
+        // Handle cell click
+        function handleCellClick(row, col) {
+            if (selectedPiece) {
+                const [selectedRow, selectedCol] = selectedPiece;
+
+                // Check if the move is valid
+                if (validMoves.some(move => move[0] === row && move[1] === col)) {
+                    movePiece(selectedRow, selectedCol, row, col);
+                    selectedPiece = null;
+                    validMoves = [];
+                    renderBoard();
+                    setTimeout(botMove, 500);  // Give the bot time to move
+                    return;
+                }
+                selectedPiece = null;
+                validMoves = [];
+            }
+
+            // Select the piece
+            if (board[row][col] && board[row][col] !== "") {
+                selectedPiece = [row, col];
+                validMoves = getValidMoves(row, col);
+            }
         }
 
-        // Keydown event listener
-        document.addEventListener('keydown', (e) => {
-            if (e.key === 'w' || e.key === 'ArrowUp') player.moveUp = true;
-            if (e.key === 's' || e.key === 'ArrowDown') player.moveDown = true;
-            if (e.key === 'a' || e.key === 'ArrowLeft') player.moveLeft = true;
-            if (e.key === 'd' || e.key === 'ArrowRight') player.moveRight = true;
-            if (e.key === ' ' && !gameOver) shootBullet();  // Space to shoot
-        });
-
-        // Keyup event listener
-        document.addEventListener('keyup', (e) => {
-            if (e.key === 'w' || e.key === 'ArrowUp') player.moveUp = false;
-            if (e.key === 's' || e.key === 'ArrowDown') player.moveDown = false;
-            if (e.key === 'a' || e.key === 'ArrowLeft') player.moveLeft = false;
-            if (e.key === 'd' || e.key === 'ArrowRight') player.moveRight = false;
-        });
-
-        // Game loop
-        function gameLoop() {
-            if (gameOver) return;
-
-            ctx.clearRect(0, 0, canvas.width, canvas.height);  // Clear canvas
-
-            player.update();  // Update player position
-            bullets.forEach(bullet => bullet.update());  // Update bullet positions
-            enemies.forEach(enemy => enemy.update());  // Update enemies
-            detectCollisions();  // Check for collisions
-
-            // Create new enemies periodically
-            if (Math.random() < 0.02) createEnemy();
-
-            // Repeat the game loop
-            requestAnimationFrame(gameLoop);
+        // Move piece
+        function movePiece(fromRow, fromCol, toRow, toCol) {
+            const piece = board[fromRow][fromCol];
+            board[toRow][toCol] = piece;
+            board[fromRow][fromCol] = "";
         }
 
-        // Start the game loop
-        gameLoop();
+        // Get valid moves for a piece (simplified logic)
+        function getValidMoves(row, col) {
+            const piece = board[row][col].toLowerCase();
+            let moves = [];
+
+            if (piece === 'p') {
+                // Pawn logic (simplified)
+                if (board[row - 1] && board[row - 1][col] === "") moves.push([row - 1, col]);
+                if (board[row + 1] && board[row + 1][col] === "") moves.push([row + 1, col]);
+            }
+
+            if (piece === 'r' || piece === 'q') {
+                // Rook or Queen (horizontal and vertical)
+                for (let i = 1; i < 8; i++) {
+                    if (row + i < 8 && board[row + i][col] === "") moves.push([row + i, col]);
+                    if (row - i >= 0 && board[row - i][col] === "") moves.push([row - i, col]);
+                    if (col + i < 8 && board[row][col + i] === "") moves.push([row, col + i]);
+                    if (col - i >= 0 && board[row][col - i] === "") moves.push([row, col - i]);
+                }
+            }
+
+            // Add more movement logic for other pieces here...
+
+            return moves;
+        }
+
+        // Bot's turn (random valid move)
+        function botMove() {
+            const botPiece = "r";  // Bot will just play as black rook for now
+            let possibleMoves = [];
+            for (let row = 0; row < 8; row++) {
+                for (let col = 0; col < 8; col++) {
+                    if (board[row][col] && board[row][col].toLowerCase() === botPiece) {
+                        const moves = getValidMoves(row, col);
+                        moves.forEach(move => possibleMoves.push({ from: [row, col], to: move }));
+                    }
+                }
+            }
+
+            if (possibleMoves.length > 0) {
+                const randomMove = possibleMoves[Math.floor(Math.random() * possibleMoves.length)];
+                movePiece(randomMove.from[0], randomMove.from[1], randomMove.to[0], randomMove.to[1]);
+                renderBoard();
+            }
+        }
+
+        // Initial render
+        renderBoard();
     </script>
 </body>
 </html>
