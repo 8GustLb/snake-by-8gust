@@ -48,16 +48,19 @@
   <div id="board1"></div>
   <div id="restart-btn">Restart Game</div>
 
+  <script src="https://unpkg.com/@chriso/chessboardjs@1.0.0/dist/chessboard-1.0.0.min.js"></script>
+
   <script>
-    const board = ChessBoard("board1", {
+    // Set up the board and game logic using chess.js and chessboard.js
+    const board = ChessBoard('board1', {
       draggable: true,
       dropOffBoard: 'trash',
       sparePieces: true
     });
 
-    const game = new Chess(); // Initialize Chess.js for game logic
+    const game = new Chess(); // Using chess.js to handle the game logic
 
-    // Function to make the bot move
+    // Function for the bot to make a move
     function makeBotMove() {
       const moves = game.legalMoves();
       const randomMove = moves[Math.floor(Math.random() * moves.length)];
@@ -65,19 +68,19 @@
       board.position(game.fen()); // Update the board to reflect the move
     }
 
-    // Handle the restart functionality
+    // Event for restarting the game
     document.getElementById('restart-btn').addEventListener('click', () => {
-      game.reset(); // Reset the chess game
-      board.start(); // Reset the chessboard
+      game.reset(); // Reset the game logic
+      board.start(); // Reset the board to the initial position
     });
 
-    // Event listener for when the user makes a move
+    // Detect when the user makes a move
     board.on('move', (oldPos, newPos) => {
       game.uci(newPos); // Apply the user's move to the game
       makeBotMove(); // Let the bot make a move after the user
     });
 
-    // Initialize the game
+    // Start the game with the initial position
     board.start();
   </script>
 </body>
