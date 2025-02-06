@@ -31,7 +31,8 @@
         let player, bullets, enemies, gameOver;
         const playerSpeed = 5;
         const bulletSpeed = 7;
-        const enemySpeed = 1;
+        const enemySpeed = 2;
+        let score = 0;
 
         // Player object
         function Player(x, y) {
@@ -126,17 +127,26 @@
                         bullets.splice(index, 1);  // Remove bullet
                         if (enemy.health <= 0) {
                             enemies.splice(enemyIndex, 1);  // Remove enemy
+                            score += 10;  // Increase score
                         }
                     }
                 });
+            });
+
+            // Check for collisions with player
+            enemies.forEach((enemy, enemyIndex) => {
+                if (enemy.y + enemy.height >= player.y && enemy.x < player.x + player.width && enemy.x + enemy.width > player.x) {
+                    gameOver = true;  // Game over if player is hit
+                    alert('Game Over! You lost.');
+                    clearInterval(gameInterval);  // Stop the game loop
+                }
             });
         }
 
         // Game over check
         function checkGameOver() {
-            if (player.health <= 0) {
-                gameOver = true;
-                alert('Game Over! You lost.');
+            if (gameOver) {
+                alert('Game Over! Your Score: ' + score);
             }
         }
 
