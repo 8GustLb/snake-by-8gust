@@ -1,194 +1,69 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Chess Game with Bot</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 0;
-            padding: 0;
-            background-color: #f4f4f4;
-        }
-
-        h1 {
-            text-align: center;
-            margin-top: 20px;
-        }
-
-        #board {
-            display: grid;
-            grid-template-columns: repeat(8, 60px);
-            grid-template-rows: repeat(8, 60px);
-            margin: 20px auto;
-            border: 2px solid #333;
-        }
-
-        .cell {
-            width: 60px;
-            height: 60px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border: 1px solid #ccc;
-            position: relative;
-        }
-
-        .cell:nth-child(odd) {
-            background-color: #f0d9b5;
-        }
-
-        .cell:nth-child(even) {
-            background-color: #b58863;
-        }
-
-        .piece {
-            width: 50%;
-            height: 50%;
-            position: absolute;
-            cursor: pointer;
-        }
-
-        .piece.white { color: white; }
-        .piece.black { color: black; }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Chess Game with Bot</title>
+  <link rel="stylesheet" href="https://unpkg.com/@chriso/chessboardjs@1.0.0/dist/chessboard-1.0.0.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chess.js@0.10.3/chess.min.js"></script>
+  <style>
+    #board1 { margin: 0 auto; }
+    #restart-btn {
+      text-align: center;
+      padding: 10px;
+      background-color: #4CAF50;
+      color: white;
+      cursor: pointer;
+    }
+    #restart-btn:hover {
+      background-color: #45a049;
+    }
+  </style>
 </head>
 <body>
-    <h1>Chess Game with Bot</h1>
-    <div id="board"></div>
+  <h1 style="text-align:center;">Chess Game with Bot</h1>
+  <div id="board1" style="width: 400px; height: 400px; margin: 0 auto;"></div>
+  <div id="restart-btn">Restart Game</div>
+  
+  <script>
+    const board = ChessBoard("board1", {
+      draggable: true,
+      dropOffBoard: 'trash',
+      sparePieces: true
+    });
 
-    <script>
-        // Initial Chess Setup
-        const initialBoard = [
-            ["r", "n", "b", "q", "k", "b", "n", "r"],
-            ["p", "p", "p", "p", "p", "p", "p", "p"],
-            ["", "", "", "", "", "", "", ""],
-            ["", "", "", "", "", "", "", ""],
-            ["", "", "", "", "", "", "", ""],
-            ["", "", "", "", "", "", "", ""],
-            ["P", "P", "P", "P", "P", "P", "P", "P"],
-            ["R", "N", "B", "Q", "K", "B", "N", "R"]
-        ];
+    const game = new Chess(); // Using chess.js to handle game logic
 
-        let board = JSON.parse(JSON.stringify(initialBoard)); // Copy the initial board
-        let selectedPiece = null;
-        let validMoves = [];
+    function makeBotMove() {
+      const moves = game.legalMoves();
+      const randomMove = moves[Math.floor(Math.random() * moves.length)];
+      game.uci(randomMove); // Apply random move to the game
+      board.position(game.fen()); // Update the board
+      renderMoveHistory(game.history());
+    }
 
-        const boardElement = document.getElementById('board');
+    // This function updates the move history and handles the bot's turn after the user plays.
+    function renderMoveHistory(moves) {
+      let historyElement = $('#move-history').empty();
+      historyElement.empty();
+      historyElement.append(moves.join(' '));
+    }
 
-        // Map pieces to their symbols
-        const pieceSymbols = {
-            "K": "♔", "Q": "♕", "R": "♖", "B": "♗", "N": "♘", "P": "♙",
-            "k": "♚", "q": "♛", "r": "♜", "b": "♝", "n": "♞", "p": "♟"
-        };
+    // Event for restarting the game
+    document.getElementById('restart-btn').addEventListener('click', () => {
+      game.reset();
+      board.start();
+    });
 
-        // Render the board
-        function renderBoard() {
-            boardElement.innerHTML = "";
-            for (let row = 0; row < 8; row++) {
-                for (let col = 0; col < 8; col++) {
-                    const cell = document.createElement('div');
-                    cell.classList.add('cell');
-                    cell.dataset.row = row;
-                    cell.dataset.col = col;
+    // Detect when the user makes a move
+    board.on('move', (oldPos, newPos) => {
+      game.uci(newPos); // Apply move to game logic
+      makeBotMove(); // Let the bot play after the user
+    });
 
-                    // Display piece if there is one
-                    const piece = board[row][col];
-                    if (piece) {
-                        const pieceElement = document.createElement('div');
-                        pieceElement.classList.add('piece', piece === piece.toUpperCase() ? 'white' : 'black');
-                        pieceElement.innerHTML = pieceSymbols[piece];
-                        cell.appendChild(pieceElement);
-                    }
-
-                    // Click event to select and move pieces
-                    cell.addEventListener('click', () => handleCellClick(row, col));
-                    boardElement.appendChild(cell);
-                }
-            }
-        }
-
-        // Handle cell click
-        function handleCellClick(row, col) {
-            if (selectedPiece) {
-                const [selectedRow, selectedCol] = selectedPiece;
-
-                // Check if the move is valid
-                if (validMoves.some(move => move[0] === row && move[1] === col)) {
-                    movePiece(selectedRow, selectedCol, row, col);
-                    selectedPiece = null;
-                    validMoves = [];
-                    renderBoard();
-                    setTimeout(botMove, 500);  // Give the bot time to move
-                    return;
-                }
-                selectedPiece = null;
-                validMoves = [];
-            }
-
-            // Select the piece
-            if (board[row][col] && board[row][col] !== "") {
-                selectedPiece = [row, col];
-                validMoves = getValidMoves(row, col);
-            }
-        }
-
-        // Move piece
-        function movePiece(fromRow, fromCol, toRow, toCol) {
-            const piece = board[fromRow][fromCol];
-            board[toRow][toCol] = piece;
-            board[fromRow][fromCol] = "";
-        }
-
-        // Get valid moves for a piece (simplified logic)
-        function getValidMoves(row, col) {
-            const piece = board[row][col].toLowerCase();
-            let moves = [];
-
-            if (piece === 'p') {
-                // Pawn logic (simplified)
-                if (board[row - 1] && board[row - 1][col] === "") moves.push([row - 1, col]);
-                if (board[row + 1] && board[row + 1][col] === "") moves.push([row + 1, col]);
-            }
-
-            if (piece === 'r' || piece === 'q') {
-                // Rook or Queen (horizontal and vertical)
-                for (let i = 1; i < 8; i++) {
-                    if (row + i < 8 && board[row + i][col] === "") moves.push([row + i, col]);
-                    if (row - i >= 0 && board[row - i][col] === "") moves.push([row - i, col]);
-                    if (col + i < 8 && board[row][col + i] === "") moves.push([row, col + i]);
-                    if (col - i >= 0 && board[row][col - i] === "") moves.push([row, col - i]);
-                }
-            }
-
-            // Add more movement logic for other pieces here...
-
-            return moves;
-        }
-
-        // Bot's turn (random valid move)
-        function botMove() {
-            const botPiece = "r";  // Bot will just play as black rook for now
-            let possibleMoves = [];
-            for (let row = 0; row < 8; row++) {
-                for (let col = 0; col < 8; col++) {
-                    if (board[row][col] && board[row][col].toLowerCase() === botPiece) {
-                        const moves = getValidMoves(row, col);
-                        moves.forEach(move => possibleMoves.push({ from: [row, col], to: move }));
-                    }
-                }
-            }
-
-            if (possibleMoves.length > 0) {
-                const randomMove = possibleMoves[Math.floor(Math.random() * possibleMoves.length)];
-                movePiece(randomMove.from[0], randomMove.from[1], randomMove.to[0], randomMove.to[1]);
-                renderBoard();
-            }
-        }
-
-        // Initial render
-        renderBoard();
-    </script>
+    // Start the game with the initial position
+    board.start();
+  </script>
 </body>
 </html>
