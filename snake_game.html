@@ -157,8 +157,9 @@
 
             // Check for collisions with player (game over)
             enemies.forEach((enemy, enemyIndex) => {
-                if (enemy.y + enemy.height >= player.y && enemy.x < player.x + player.width && enemy.x + enemy.width > player.x) {
-                    gameOver = true;  // Game over if player touches an enemy
+                if (enemy.y + enemy.height >= player.y && enemy.x < player.x + player.width && enemy.x + enemy.width > player.x && enemy.y + enemy.height <= player.y + player.height) {
+                    // Game over if player collides with the enemy
+                    gameOver = true;  // Game over
                     document.getElementById("restart-btn").style.display = "block";  // Show restart button
                 }
             });
