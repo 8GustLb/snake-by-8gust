@@ -109,7 +109,7 @@
             this.height = 40;
             this.color = 'green';
             this.speed = enemySpeed;
-            this.health = 50;
+            this.health = 1; // Change health to 1 (enemies die in one hit)
 
             this.update = function() {
                 this.y += this.speed;
@@ -149,13 +149,10 @@
                 enemies.forEach((enemy, enemyIndex) => {
                     if (bullet.y <= enemy.y + enemy.height && bullet.y >= enemy.y && bullet.x >= enemy.x && bullet.x <= enemy.x + enemy.width) {
                         // Bullet hits the enemy
-                        enemy.color = 'green';  // Enemy turns green when hit
-                        bullets.splice(index, 1);  // Remove bullet
-                        if (enemy.health <= 0) {
-                            enemies.splice(enemyIndex, 1);  // Remove enemy
-                            score += 10;  // Increase score
-                            document.getElementById("score").textContent = score; // Update score display
-                        }
+                        enemies.splice(enemyIndex, 1);  // Remove the enemy
+                        bullets.splice(index, 1);  // Remove the bullet
+                        score += 10;  // Increase score
+                        document.getElementById("score").textContent = score; // Update score display
                     }
                 });
             });
