@@ -1,2 +1,1 @@
-# snake-by-8gust
-By 8Gust LB
+8 GustLBsa
